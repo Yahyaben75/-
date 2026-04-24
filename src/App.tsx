@@ -78,7 +78,6 @@ export default function App() {
     category: CATEGORIES[0].id,
     spyCount: 1,
     timerSeconds: 120,
-    showSpyHint: true,
   });
 
   const [roundData, setRoundData] = useState<RoundData | null>(null);
@@ -132,7 +131,6 @@ export default function App() {
 
     setRoundData({
       secretWord: pair.word,
-      spyHint: pair.spyHint,
       spyIndices,
       players: [...players].sort(() => Math.random() - 0.5), // Shuffle players for the pass sequence
       currentPlayerIndex: 0,
@@ -463,11 +461,6 @@ export default function App() {
                         <h2 className={`text-4xl sm:text-7xl font-black ${isSpy ? 'text-red-500' : 'text-cyan-400'} tracking-tighter filter drop-shadow-lg break-words`}>
                             {isSpy ? 'أنت الجاسوس!' : roundData.secretWord}
                         </h2>
-                        {isSpy && settings.showSpyHint && (
-                             <div className="p-4 sm:p-6 bg-red-500/10 border border-red-500/30 rounded-[24px] sm:rounded-3xl backdrop-blur-md">
-                                <p className="text-white text-lg sm:text-xl font-bold">{roundData.spyHint}</p>
-                             </div>
-                        )}
                         {!isSpy && (
                             <div className="flex flex-col items-center gap-2">
                                 <div className="px-3 py-0.5 sm:px-4 sm:py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-[10px] sm:text-xs font-black uppercase border border-emerald-500/30">فريق الأبرياء</div>

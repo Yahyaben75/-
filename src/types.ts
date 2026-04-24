@@ -12,12 +12,10 @@ export interface GameSettings {
   category: string;
   spyCount: number;
   timerSeconds: number;
-  showSpyHint: boolean;
 }
 
 export interface RoundData {
   secretWord: string;
-  spyHint: string;
   spyIndices: number[];
   players: Player[];
   currentPlayerIndex: number;
