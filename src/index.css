@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Almarai", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  
+  --color-immersive-bg: #05050a;
+  --color-immersive-panel: rgba(15, 23, 42, 0.6);
+  --color-immersive-border: rgba(139, 92, 246, 0.3);
+  --color-immersive-card: rgba(30, 41, 59, 0.5);
+  --color-immersive-accent: #8b5cf6;
+  --color-immersive-glow: rgba(168, 85, 247, 0.4);
+}
+
+@layer base {
+  body {
+    @apply bg-immersive-bg text-gray-200 antialiased;
+    background: radial-gradient(circle at 50% -20%, #1e1b4b 0%, #05050a 70%);
+    min-height: 100vh;
+  }
+}
+
+.title-glow {
+  background: linear-gradient(135deg, #a855f7, #06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 15px var(--color-immersive-glow));
+}
+
+.btn-immersive {
+  background: linear-gradient(135deg, #7c3aed, #2563eb);
+  @apply text-white border-none rounded-xl font-bold transition-all shadow-lg shadow-black/40 active:scale-95;
+}
+
+.panel-glass {
+  @apply bg-immersive-panel border border-immersive-border rounded-[24px] backdrop-blur-[10px];
+}
+
+.card-immersive {
+  @apply bg-immersive-card border border-white/5 rounded-2xl transition-all;
+}
+
+.card-immersive:hover {
+  @apply border-cyan-500/50 bg-slate-800/80;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-black/20;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-violet-600/50 rounded-full;
+}
