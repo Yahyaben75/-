@@ -30,7 +30,9 @@ import {
   Dog,
   Gamepad2,
   LayoutGrid,
-  Info
+  Info,
+  Tag,
+  Package
 } from 'lucide-react';
 import { CATEGORIES } from './constants';
 import { Player, GameSettings, GameStep, RoundData } from './types';
@@ -56,7 +58,10 @@ const CategoryIcon = ({ name, className }: { name: string, className?: string })
     Globe,
     MapPin,
     Dog,
-    Gamepad2
+    Gamepad2,
+    Tag,
+    Package,
+    Smartphone
   };
   const Icon = icons[name] || LayoutGrid;
   return <Icon className={className} />;
@@ -80,6 +85,11 @@ export default function App() {
     timerSeconds: 120,
   });
 
+  const [usedWordsHistory, setUsedWordsHistory] = useState<Record<string, string[]>>(() => {
+    const saved = localStorage.getItem('spy_used_words');
+    return saved ? JSON.parse(saved) : {};
+  });
+
   const [roundData, setRoundData] = useState<RoundData | null>(null);
   const [isRevealed, setIsRevealed] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -90,6 +100,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('spy_players', JSON.stringify(players));
   }, [players]);
+
+  useEffect(() => {
+    localStorage.setItem('spy_used_words', JSON.stringify(usedWordsHistory));
+  }, [usedWordsHistory]);
 
   // --- Handlers ---
   const addPlayer = () => {
@@ -116,8 +130,35 @@ export default function App() {
       return;
     }
     const category = CATEGORIES.find(c => c.id === settings.category) || CATEGORIES[0];
-    const randomIndex = Math.floor(Math.random() * category.pairs.length);
-    const pair = category.pairs[randomIndex];
+    
+    // Word selection with repetition prevention
+    const history = usedWordsHistory[category.id] || [];
+    let availablePairs = category.pairs.filter(p => !history.includes(p.word));
+    
+    // If all words used, reset history but exclude the very last word to avoid immediate repetition
+    if (availablePairs.length === 0) {
+      const lastWord = history[history.length - 1];
+      availablePairs = category.pairs.filter(p => p.word !== lastWord);
+      
+      // If for some reason the category has only 1 word (unlikely), fallback to full list
+      if (availablePairs.length === 0) availablePairs = category.pairs;
+      
+      setUsedWordsHistory(prev => ({ ...prev, [category.id]: [] }));
+    }
+    
+    const randomIndex = Math.floor(Math.random() * availablePairs.length);
+    const pair = availablePairs[randomIndex];
+    
+    // Update history
+    setUsedWordsHistory(prev => {
+      const currentHistory = prev[category.id] || [];
+      // Only reset if we just picked from a fresh list, otherwise append
+      const isReset = availablePairs.length === category.pairs.length && history.length > 0;
+      return {
+        ...prev,
+        [category.id]: isReset ? [pair.word] : [...currentHistory, pair.word]
+      };
+    });
     
     // Choose spies
     const spyIndices: number[] = [];
@@ -190,8 +231,7 @@ export default function App() {
             exit={{ opacity: 0, scale: 0.9, y: 10 }}
             className="absolute top-16 left-4 z-50 panel-glass p-3 text-right space-y-1 min-w-[150px]"
           >
-            <div className="text-[10px] text-cyan-400 font-black uppercase tracking-tighter">صنع من طرف عمك يحيى بنموسى</div>
-            <div className="text-[10px] text-purple-400 font-black uppercase tracking-tighter">فكرة عبد الله محداش</div>
+            <div className="text-[10px] text-cyan-400 font-black uppercase tracking-tighter">BY : 3mk YxBshadow</div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -265,8 +305,7 @@ export default function App() {
               className="overflow-hidden"
             >
               <div className="panel-glass p-3 text-right space-y-1 mb-4 border-cyan-500/20">
-                <div className="text-[10px] text-cyan-400 font-black uppercase tracking-tighter">صنع من طرف عمك يحيى بنموسى</div>
-                <div className="text-[10px] text-purple-400 font-black uppercase tracking-tighter">فكرة عبد الله محداش</div>
+                <div className="text-[10px] text-cyan-400 font-black uppercase tracking-tighter">BY : 3mk YxBshadow</div>
               </div>
             </motion.div>
           )}
@@ -274,9 +313,22 @@ export default function App() {
 
         <div className="panel-glass p-4 sm:p-6 space-y-4 sm:space-y-6">
             <div className="space-y-3">
-                <label className="text-[11px] sm:text-[12px] text-slate-400 font-black uppercase flex items-center gap-2">
-                    <LayoutGrid className="w-4 h-4 text-cyan-400" /> فئات اللعب (50+)
-                </label>
+                <div className="flex items-center justify-between">
+                    <label className="text-[11px] sm:text-[12px] text-slate-400 font-black uppercase flex items-center gap-2">
+                        <LayoutGrid className="w-4 h-4 text-cyan-400" /> فئات اللعب (150+)
+                    </label>
+                    <button 
+                        onClick={() => {
+                            if (confirm('هل تريد مسح سجل الكلمات والبدء من جديد؟')) {
+                                setUsedWordsHistory({});
+                                vibrate(100);
+                            }
+                        }}
+                        className="text-[9px] text-red-400/50 hover:text-red-400 font-bold transition-colors"
+                    >
+                        تصفير السجل
+                    </button>
+                </div>
                 <div className="flex flex-wrap gap-1.5 sm:gap-2">
                     {CATEGORIES.map(cat => (
                         <button
@@ -680,16 +732,21 @@ export default function App() {
 
   return (
     <div className="min-h-screen text-slate-200 font-sans selection:bg-cyan-500 selection:text-white overflow-x-hidden" dir="rtl">
-      <main className="relative z-10 w-full max-w-6xl mx-auto min-h-screen px-4">
-        <AnimatePresence mode="wait">
-          {step === 'home' && renderHome()}
-          {step === 'player_setup' && renderPlayerSetup()}
-          {step === 'pass_phone' && renderPassPhone()}
-          {step === 'reveal_word' && renderRevealWord()}
-          {step === 'in_round' && renderInRound()}
-          {step === 'voting' && renderVoting()}
-          {step === 'results' && renderResults()}
-        </AnimatePresence>
+      <main className="relative z-10 w-full max-w-6xl mx-auto min-h-screen px-4 flex flex-col">
+        <div className="pt-4 text-center">
+           <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 opacity-40">Beta version only 🚧</span>
+        </div>
+        <div className="flex-1">
+          <AnimatePresence mode="wait">
+            {step === 'home' && renderHome()}
+            {step === 'player_setup' && renderPlayerSetup()}
+            {step === 'pass_phone' && renderPassPhone()}
+            {step === 'reveal_word' && renderRevealWord()}
+            {step === 'in_round' && renderInRound()}
+            {step === 'voting' && renderVoting()}
+            {step === 'results' && renderResults()}
+          </AnimatePresence>
+        </div>
       </main>
 
       {/* Persistent Audio Controls */}
